@@ -58,7 +58,7 @@ describe Multitenant do
     end
     it 'yields the block' do
       @executed.should == true
-    end    
+    end
   end
 
   describe 'Multitenant.with_tenant block that raises error' do
@@ -76,7 +76,7 @@ describe Multitenant do
     end
     it 'yields the block' do
       @executed.should == true
-    end    
+    end
   end
 
   describe 'User.all when current_tenant is set' do
@@ -109,7 +109,6 @@ describe Multitenant do
     it { @items.should == [@item] }
   end
 
-
   describe 'creating new object when current_tenant is set' do
     before do
       @company = Company.create! :name => 'foo'
@@ -119,6 +118,27 @@ describe Multitenant do
     end
     it 'should auto_populate the company' do
       @user.company_id.should == @company.id
+    end
+  end
+
+  describe 'arel inside #with_tenant block' do
+    before do
+      @tenant = Tenant.create!(:name => 'foo')
+      @tenant2 = Tenant.create!(:name => 'bar')
+
+      @item = @tenant.items.create! :name => 'baz'
+      @item2 = @tenant2.items.create! :name => 'booz'
+      Multitenant.with_tenant @tenant do
+        @items = Item.where("name IS NOT NULL")
+      end
+    end
+
+    it 'should contain items with tenant' do
+      @items.should include @item
+    end
+
+    it 'should not contain items without tenant' do
+      @items.should_not include @item2
     end
   end
 end
